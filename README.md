@@ -13,7 +13,7 @@ js/topics.js          Liste aller Themen und ihrer Voraussetzungen
 js/rc.js              Simulation (Formeln, Diagramme, Regler)
 css/style.css         Farben (hell/dunkel) und Layout
 ```
-
+ 
 ## Veröffentlichen mit GitHub Pages
 
 1. Auf github.com ein neues Repository anlegen, z. B. `matura-seite` (leer, ohne README).
