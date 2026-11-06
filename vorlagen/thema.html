@@ -1,0 +1,19 @@
+    <div class="crumb"><a href="{{root}}index.html">Fächer</a> › <a href="{{root}}index.html#fach={{fach_id}}">{{fach_kuerzel}}</a> · {{fach_name}}</div>
+    <h1>{{titel}}</h1>
+    <p class="lead">{{kurz}}</p>
+
+    <!-- thema.js baut hier die Reiter aus allen <section class="tab-panel"> auf.
+         Ohne JavaScript bleibt die Leiste versteckt und alle Abschnitte stehen untereinander. -->
+    <div class="tabs" role="tablist" aria-label="Bereiche dieses Themas" hidden></div>
+
+    <section class="tab-panel" id="zusammenfassung" data-reiter="Zusammenfassung">
+      <div class="prose">
+{{zusammenfassung}}
+      </div>
+    </section>
+{{visualisierungen}}
+{{bilder}}
+    <section class="tab-panel" id="vorwissen" data-reiter="Vorwissen">
+      <h2 class="nur-ohne-js">Vorwissen</h2>
+{{vorwissen}}
+    </section>

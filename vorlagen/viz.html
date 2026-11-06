@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!-- Gerüst für EINE Visualisierung (eigene kleine Seite).
+     Sie wird auf der Themenseite per <iframe> eingebettet, kann aber auch allein (Vollbild, neuer Tab) geöffnet werden.
+     viz.js erkennt, ob die Seite eingebettet ist, und blendet dann den Kopf aus. -->
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>{{titel}} – Matura-Lernseite</title>
+  <script>try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
+  <link rel="stylesheet" href="{{root}}assets/css/style.css">
+  <script src="{{root}}assets/js/viz.js"></script>
+</head>
+<body class="viz-seite">
+  <header class="site viz-kopf">
+    <div class="wrap">
+      <a class="brand" href="{{thema_link}}">← {{thema_titel}}</a>
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="Hell/Dunkel umschalten">◐<span class="lang"> Hell/Dunkel</span></button>
+    </div>
+  </header>
+
+  <main class="wrap">
+{{inhalt}}
+  </main>
+
+  <script src="{{root}}assets/js/common.js"></script>
+</body>
+</html>

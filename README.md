@@ -1,49 +1,107 @@
 # Matura-Lernseite
 
-Kleine statische Seite (nur HTML, CSS und JavaScript, kein Build-Schritt, keine Abhängigkeiten).
-Zum Ansehen reicht ein Doppelklick auf `index.html`.
+Der gesamte Matura-Stoff an einem Ort: Zusammenfassungen mit Formeln, interaktive Visualisierungen,
+Fotos und ein Graph, der zeigt, was man vorher können muss.
+
+Live: <https://eldinmesi.github.io/matura-seite/>
+
+## Wie es funktioniert
+
+```
+faecher/      QUELLE   – hier schreibst du (Markdown, Fotos, Visualisierungen)
+   │
+   │  npm run build   (build.js)
+   ▼
+docs/         AUSGABE  – fertige Seite, wird committet, GitHub Pages zeigt sie an
+```
+
+**Nie in `docs/` von Hand ändern.** Der nächste Build überschreibt es.
+
+## Einmalig einrichten
+
+Node.js muss installiert sein (`node -v` zeigt eine Version). Dann im Projektordner:
+
+```powershell
+npm install
+```
+
+## Alltag
+
+```powershell
+npm run neu -- hwe gleichrichter "Gleichrichter"   # neues Thema anlegen
+npm run build                                        # Seite bauen (Fehler werden genau gemeldet)
+npm run vorschau                                     # docs/index.html im Browser öffnen
+git add .
+git commit -m "Gleichrichter"
+git push                                             # nach ca. 1 Minute live
+```
 
 ## Aufbau
 
 ```
-index.html            Startseite: Themenkarten + Zusammenhangs-Graph
-topics/               eine HTML-Datei pro Thema
-  rc-tiefpass.html    fertig: interaktiver RC-Tiefpass
-js/topics.js          Liste aller Themen und ihrer Voraussetzungen
-js/rc.js              Simulation (Formeln, Diagramme, Regler)
-css/style.css         Farben (hell/dunkel) und Layout
-```
- 
-## Veröffentlichen mit GitHub Pages
-
-1. Auf github.com ein neues Repository anlegen, z. B. `matura-seite` (leer, ohne README).
-2. Im Ordner dieser Seite:
-
-```
-git init
-git add .
-git commit -m "Erste Version"
-git branch -M main
-git remote add origin https://github.com/DEIN-NAME/matura-seite.git
-git push -u origin main
+faecher/
+  hwe/
+    fach.json                  { "kuerzel": "HWE", "name": "Hardwareentwicklung", "reihenfolge": 1 }
+    rc-tiefpass/               Ordnername = id des Themas
+      thema.md                 Zusammenfassung (Front matter + Markdown + Formeln)
+      viz/rc-simulation.html   Visualisierung als HTML-Fragment (+ eigene .js-Dateien)
+      bilder/                  Fotos (JPG/PNG/WebP), werden beim Build verkleinert
+vorlagen/                      HTML-Gerüste der Seiten + Vorlage für neue Themen
+assets/                        CSS und JavaScript für den Browser (wird nach docs/ kopiert)
+  js/graph.js                  Voraussetzungs-Graph (benutzt von Browser UND build.js)
+  js/home.js                   Startseite: Fach-Filter, Karten, Graph
+  js/thema.js                  Themenseite: Reiter, Bilder-Lightbox, eingebettete Visualisierungen
+  js/viz.js                    läuft in jeder Visualisierung (Höhe + Hell/Dunkel ans iframe)
+  js/common.js                 Hell/Dunkel-Schalter
+build.js                       baut docs/ aus faecher/
+neu.js                         legt ein neues Thema an
 ```
 
-3. Im Repository: **Settings → Pages → Source: Deploy from a branch → Branch `main`, Ordner `/ (root)`** → Save.
-4. Nach ca. einer Minute ist die Seite unter `https://DEIN-NAME.github.io/matura-seite/` erreichbar.
+## thema.md
 
-Hinweis: Eine GitHub-Pages-Seite ist öffentlich abrufbar, wer den Link kennt, kann sie sehen.
+```markdown
+---
+titel: RC-Tiefpass
+voraus: [spannungsteiler, impedanz, dgl-1-ordnung]
+kurz: Ein Satz für die Karte auf der Startseite.
+status: geplant          ← solange das dasteht: nur im Graphen, keine eigene Seite
+---
 
-Jede weitere Änderung: `git add .`, `git commit -m "..."`, `git push`. Die Seite aktualisiert sich von selbst.
+## Das Wichtigste in Kürze
+- Formeln im Text: $f_g = \frac{1}{2\pi RC}$, als Block: $$ ... $$
 
-## Neues Thema hinzufügen
+{{viz:rc-simulation}}                       ← Visualisierung einbetten (eigene Zeile)
+![Heft Seite 3](bilder/heft-seite-3.jpg)    ← Foto
+Siehe [[impedanz]] oder [[impedanz|Text]]   ← Link auf ein anderes Thema
 
-1. In `js/topics.js` einen Eintrag ergänzen. `voraus` ist die Liste der Themen, die man vorher können muss:
-
-```js
-{ id: 'bode-diagramm', title: 'Bode-Diagramm', fach: 'Elektronik', status: 'fertig',
-  file: 'bode-diagramm.html', voraus: ['uebertragungsfunktion', 'rc-tiefpass'], kurz: '...' }
+## Typische Fragen
+### Frage?                                  ← wird zum Aufklappen
+Antwort.
 ```
 
-2. `topics/rc-tiefpass.html` kopieren, umbenennen, `data-topic` im `<body>` auf die neue `id` setzen und den Inhalt ersetzen.
+- Das **Fach** ergibt sich aus dem Ordner, nicht aus dem Front matter.
+- **ids** (Ordnernamen): klein, ohne Umlaute, mit Bindestrich, z. B. `uebertragungsfunktion`.
+- Ein `$` als echtes Dollarzeichen: `\$`. „5 $ und 10 $“ (mit Leerzeichen) bleibt ohnehin Text.
 
-Der Graph auf der Startseite und der Kasten „Das solltest du vorher können“ auf jeder Themenseite bauen sich aus `voraus` automatisch auf.
+## Visualisierung
+
+Eine `.html`-Datei in `viz/`, **nur der Inhalt** (kein `<html>`, kein `<head>`). Oben zwei Kommentare:
+
+```html
+<!-- titel: RC-Tiefpass – Simulation -->
+<!-- kurz: R, C und f einstellen ... -->
+<div class="card"> ... </div>
+<script src="rc-simulation.js"></script>
+```
+
+Sie wird auf der Themenseite in einem `<iframe>` gezeigt (mit Vollbild-Knopf) und erscheint automatisch
+auf der Seite „Alle Visualisierungen“. Mehrere Visualisierungen pro Thema sind möglich.
+
+## Was der Build prüft
+
+Doppelte ids, unbekannte ids in `voraus` oder `[[Links]]`, Zyklen im Graphen, fehlerhafte Formeln,
+fehlende Bilder und Visualisierungen. Bei einem Fehler bricht er ab und nennt Datei und Grund.
+
+## GitHub Pages
+
+Settings → Pages → Deploy from a branch → `main` → **`/docs`**. Die Seite ist öffentlich abrufbar.

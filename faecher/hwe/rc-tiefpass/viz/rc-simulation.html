@@ -1,0 +1,98 @@
+<!-- titel: RC-Tiefpass – Simulation -->
+<!-- kurz: R, C und f einstellen: Grenzfrequenz, Bode-Diagramm, Sinus- und Rechteckantwort. -->
+<!--
+  Visualisierung als FRAGMENT: nur der Inhalt, ohne <html>/<head>.
+  build.js setzt das in vorlagen/viz.html ein (Kopf, Farben, Hell/Dunkel, Höhenanpassung im iframe).
+  Die zwei Kommentare oben (titel, kurz) liest build.js für die Seite "Alle Visualisierungen".
+  Alle Dateien in diesem viz-Ordner (z. B. rc-simulation.js) werden unverändert mitkopiert.
+-->
+    <div class="card">
+      <div class="sim">
+        <div>
+          <svg id="circuit" viewBox="0 0 470 210" role="img" aria-label="Schaltbild: Eingangsspannung u_e, Widerstand R in Reihe, Kondensator C gegen Masse, Ausgangsspannung u_a am Kondensator">
+            <defs>
+              <marker id="ah-in" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah-in" d="M0 0 L10 5 L0 10 z"/></marker>
+              <marker id="ah-out" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah-out" d="M0 0 L10 5 L0 10 z"/></marker>
+            </defs>
+            <path class="wire" d="M40 55 H110 M190 55 H410 M40 165 H410 M320 55 V98 M320 112 V165"/>
+            <rect class="part" x="110" y="43" width="80" height="24" rx="3"/>
+            <path class="plate" d="M300 98 H340 M300 112 H340"/>
+            <path class="wire" d="M225 165 V176 M211 176 H239 M217 182 H233 M222 188 H228"/>
+            <circle class="nodedot" cx="320" cy="55" r="3.5"/>
+            <circle class="term" cx="40" cy="55" r="4"/><circle class="term" cx="40" cy="165" r="4"/>
+            <circle class="term" cx="410" cy="55" r="4"/><circle class="term" cx="410" cy="165" r="4"/>
+            <line class="arr-in" x1="18" y1="160" x2="18" y2="64" marker-end="url(#ah-in)"/>
+            <line class="arr-out" x1="436" y1="160" x2="436" y2="64" marker-end="url(#ah-out)"/>
+            <text class="ct" x="26" y="116">u<tspan dy="3" font-size="10">e</tspan></text>
+            <text class="ct" x="444" y="116">u<tspan dy="3" font-size="10">a</tspan></text>
+            <text class="ct" id="lbl-r" x="150" y="32" text-anchor="middle">R</text>
+            <text class="ct" id="lbl-c" x="350" y="109">C</text>
+            <text class="ct2" x="248" y="186">Masse</text>
+          </svg>
+          <div class="meter" aria-live="polite">
+            <div class="meter-head"><span>Ausgangsamplitude Û_a / Û_e</span><strong id="meter-txt"></strong></div>
+            <div class="meter-track"><div class="meter-fill" id="meter-fill"></div></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="ctl">
+            <div class="ctl-head"><label for="in-r">Widerstand R</label><output id="out-r" for="in-r"></output></div>
+            <input type="range" id="in-r">
+          </div>
+          <div class="ctl">
+            <div class="ctl-head"><label for="in-c">Kapazität C</label><output id="out-c" for="in-c"></output></div>
+            <input type="range" id="in-c">
+          </div>
+          <div class="ctl">
+            <div class="ctl-head"><label for="in-f">Signalfrequenz f</label><output id="out-f" for="in-f"></output></div>
+            <input type="range" id="in-f">
+            <div class="presets">
+              <button type="button" data-fmult="0.1">f = f_g / 10</button>
+              <button type="button" data-fmult="1">f = f_g</button>
+              <button type="button" data-fmult="10">f = 10 · f_g</button>
+            </div>
+          </div>
+          <p class="caption">R und C rasten auf Werte der Normreihe E12 ein, wie im Labor.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tiles">
+      <div class="tile"><div class="lab">Grenzfrequenz f_g</div><div class="val" id="o-fg"></div><div class="sub" id="o-f-rel"></div></div>
+      <div class="tile"><div class="lab">Zeitkonstante τ = R·C</div><div class="val" id="o-tau"></div><div class="sub">Sprung: 63 % nach τ</div></div>
+      <div class="tile"><div class="lab">Dämpfung bei f</div><div class="val" id="o-h"></div><div class="sub" id="o-h-sub"></div></div>
+      <div class="tile"><div class="lab">Phase bei f</div><div class="val" id="o-phi"></div><div class="sub">Ausgang eilt nach</div></div>
+    </div>
+
+    <div class="card">
+      <div class="chart-head">
+        <div class="legend"><span><i class="l-in"></i>u<sub>e</sub> (Eingang)</span><span><i class="l-out"></i>u<sub>a</sub> (Ausgang)</span></div>
+        <div class="seg" role="group" aria-label="Signalform">
+          <button type="button" id="mode-sin" aria-pressed="true">Sinus</button>
+          <button type="button" id="mode-rect" aria-pressed="false">Rechteck</button>
+        </div>
+      </div>
+      <div class="chart-wrap"><svg id="time-svg" role="img" aria-label="Zeitverlauf von Eingangs- und Ausgangsspannung"></svg></div>
+      <p class="caption" id="time-caption"></p>
+    </div>
+
+    <div class="card">
+      <h3>Bode-Diagramm – hier kannst du ziehen</h3>
+      <p class="caption" style="margin-top:0">Fahre mit der Maus über die Diagramme, um Werte abzulesen. Klicken oder Ziehen stellt die Signalfrequenz f ein (der Punkt zeigt die aktuelle Frequenz, die senkrechte Linie f<sub>g</sub>).</p>
+      <div class="bode">
+        <div class="chart-wrap"><svg id="bode-mag" role="img" aria-label="Betragskennlinie des RC-Tiefpasses in dB über der Frequenz"></svg><div class="tip"></div></div>
+        <div class="chart-wrap"><svg id="bode-ph" role="img" aria-label="Phasenkennlinie des RC-Tiefpasses in Grad über der Frequenz"></svg><div class="tip"></div></div>
+      </div>
+      <details>
+        <summary>Als Tabelle anzeigen</summary>
+        <table>
+          <thead><tr><th>Frequenz</th><th>Betrag in dB</th><th>|H|</th><th>Phase</th></tr></thead>
+          <tbody id="tbl-body"></tbody>
+        </table>
+      </details>
+    </div>
+
+    <p class="caption">Alle Kurven werden live aus den Formeln berechnet. Û<sub>e</sub> ist auf 1 V normiert.</p>
+
+    <script src="rc-simulation.js"></script>

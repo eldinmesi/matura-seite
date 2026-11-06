@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<!-- Gerüst für ALLE normalen Seiten. build.js ersetzt die {{platzhalter}}.
+     root = relativer Weg zum docs-Ordner (z. B. "" auf der Startseite, "../../../" auf einer Themenseite).
+     Alle Links sind relativ, damit die Seite auf GitHub Pages UND per Doppelklick (file://) funktioniert. -->
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>{{titel}}</title>
+  <!-- Gespeichertes Hell/Dunkel schon VOR dem Zeichnen setzen, sonst blitzt kurz die falsche Farbe auf. -->
+  <script>try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
+  <link rel="stylesheet" href="{{root}}assets/css/style.css">
+{{kopf}}
+</head>
+<body{{body}}>
+  <header class="site">
+    <div class="wrap">
+      <a class="brand" href="{{root}}index.html">Matura-Lernseite</a>
+      <nav class="topnav" aria-label="Hauptnavigation">
+        <a class="nur-gross" href="{{root}}index.html">Fächer</a>
+        <a href="{{root}}alle-visualisierungen.html">Alle Visualisierungen</a>
+      </nav>
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="Hell/Dunkel umschalten">◐<span class="lang"> Hell/Dunkel</span></button>
+    </div>
+  </header>
+
+  <main class="wrap">
+{{inhalt}}
+  </main>
+
+  <script src="{{root}}assets/js/common.js"></script>
+{{skripte}}
+</body>
+</html>

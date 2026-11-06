@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Matura-Lernseite</title>
+  <script>try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
+  <link rel="stylesheet" href="assets/css/style.css">
+
+</head>
+<body>
+  <header class="site">
+    <div class="wrap">
+      <a class="brand" href="index.html">Matura-Lernseite</a>
+      <nav class="topnav" aria-label="Hauptnavigation">
+        <a class="nur-gross" href="index.html">Fächer</a>
+        <a href="alle-visualisierungen.html">Alle Visualisierungen</a>
+      </nav>
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="Hell/Dunkel umschalten">◐<span class="lang"> Hell/Dunkel</span></button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1>Mein Matura-Stoff an einem Ort</h1>
+    <p class="lead">Kurze, verständliche Erklärungen – und überall dort, wo es passt, zum Ausprobieren: Werte verändern und sofort sehen, was passiert.</p>
+
+    <h2>Fächer</h2>
+    <div class="faecher" id="faecher" role="group" aria-label="Nach Fach filtern"></div>
+
+    <h2 id="themen-titel">Themen</h2>
+    <div class="cards" id="cards"></div>
+
+    <section id="zusammenhaenge">
+      <h2>Zusammenhänge</h2>
+      <p>Klick auf ein Thema: Der Graph zeigt dir, was du dafür vorher können musst – auch indirekt. Pfeile gehen von der Voraussetzung zum Thema.</p>
+      <div class="graph-scroll"><svg id="graph" role="group" aria-label="Graph der Themen und ihrer Voraussetzungen"></svg></div>
+      <p class="caption" id="graph-legende"></p>
+      <div class="panel" id="chain" aria-live="polite"></div>
+    </section>
+
+  </main>
+
+  <script src="assets/js/common.js"></script>
+  <script src="daten/themen.js"></script>
+  <script src="assets/js/graph.js"></script>
+  <script src="assets/js/home.js"></script>
+</body>
+</html>

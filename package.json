@@ -1,0 +1,16 @@
+{
+  "name": "matura-seite",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Matura-Lernseite: Zusammenfassungen, Visualisierungen und Vorwissen-Graph. Quelle in faecher/, Ausgabe in docs/.",
+  "scripts": {
+    "build": "node build.js",
+    "neu": "node neu.js",
+    "vorschau": "explorer docs\\index.html"
+  },
+  "dependencies": {
+    "katex": "^0.19.1",
+    "marked": "^18.1.3",
+    "sharp": "^0.35.5"
+  }
+}
