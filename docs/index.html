@@ -23,27 +23,59 @@
 
   <main class="wrap">
     <h1>Mein Matura-Stoff an einem Ort</h1>
-    <p class="lead">Kurze, verständliche Erklärungen – und überall dort, wo es passt, zum Ausprobieren: Werte verändern und sofort sehen, was passiert.</p>
+    <p class="lead">Wähle ein Fach. Dort findest du alle Themen mit Zusammenfassung – und überall dort, wo es passt, etwas zum Ausprobieren.</p>
 
-    <h2>Fächer</h2>
-    <div class="faecher" id="faecher" role="group" aria-label="Nach Fach filtern"></div>
-
-    <h2 id="themen-titel">Themen</h2>
-    <div class="cards" id="cards"></div>
-
-    <section id="zusammenhaenge">
-      <h2>Zusammenhänge</h2>
-      <p>Klick auf ein Thema: Der Graph zeigt dir, was du dafür vorher können musst – auch indirekt. Pfeile gehen von der Voraussetzung zum Thema.</p>
-      <div class="graph-scroll"><svg id="graph" role="group" aria-label="Graph der Themen und ihrer Voraussetzungen"></svg></div>
-      <p class="caption" id="graph-legende"></p>
-      <div class="panel" id="chain" aria-live="polite"></div>
-    </section>
+    <nav class="faecher" aria-label="Fächer">
+      <a class="fach-kachel" href="faecher/hwe/index.html">
+        <strong>HWE</strong>
+        <span class="name">Hardwareentwicklung</span>
+        <span class="info">4 Themen · 1 fertig</span>
+      </a>
+      <a class="fach-kachel" href="faecher/mtrs/index.html">
+        <strong>MTRS</strong>
+        <span class="name">Messtechnik und Regelungssysteme</span>
+        <span class="info">4 Themen · 2 fertig</span>
+      </a>
+      <a class="fach-kachel" href="faecher/dic/index.html">
+        <strong>DIC</strong>
+        <span class="name">Digitale Systeme und Computersysteme</span>
+        <span class="info">noch keine Themen</span>
+      </a>
+      <a class="fach-kachel" href="faecher/ksn/index.html">
+        <strong>KSN</strong>
+        <span class="name">Kommunikationssysteme und -netze</span>
+        <span class="info">noch keine Themen</span>
+      </a>
+      <a class="fach-kachel" href="faecher/fsst/index.html">
+        <strong>FSST</strong>
+        <span class="name">Fachspezifische Softwaretechnik</span>
+        <span class="info">noch keine Themen</span>
+      </a>
+      <a class="fach-kachel" href="faecher/kinz/index.html">
+        <strong>KINZ</strong>
+        <span class="name">Autonomie: Coding &amp; AI</span>
+        <span class="info">noch keine Themen</span>
+      </a>
+      <a class="fach-kachel" href="faecher/mathe/index.html">
+        <strong>MATHE</strong>
+        <span class="name">Mathematik</span>
+        <span class="info">3 Themen · 0 fertig</span>
+      </a>
+      <a class="fach-kachel" href="faecher/deutsch/index.html">
+        <strong>D</strong>
+        <span class="name">Deutsch</span>
+        <span class="info">3 Themen · 0 fertig</span>
+      </a>
+      <a class="fach-kachel" href="faecher/englisch/index.html">
+        <strong>E</strong>
+        <span class="name">Englisch</span>
+        <span class="info">1 Thema · 0 fertig</span>
+      </a>
+    </nav>
 
   </main>
 
   <script src="assets/js/common.js"></script>
-  <script src="daten/themen.js"></script>
-  <script src="assets/js/graph.js"></script>
-  <script src="assets/js/home.js"></script>
+
 </body>
 </html>

@@ -1,17 +1,7 @@
     <h1>Mein Matura-Stoff an einem Ort</h1>
-    <p class="lead">Kurze, verständliche Erklärungen – und überall dort, wo es passt, zum Ausprobieren: Werte verändern und sofort sehen, was passiert.</p>
+    <p class="lead">Wähle ein Fach. Dort findest du alle Themen mit Zusammenfassung – und überall dort, wo es passt, etwas zum Ausprobieren.</p>
 
-    <h2>Fächer</h2>
-    <!-- home.js füllt die Kacheln aus docs/daten/themen.js. Klick = Filter für Karten und Graph. -->
-    <div class="faecher" id="faecher" role="group" aria-label="Nach Fach filtern"></div>
-
-    <h2 id="themen-titel">Themen</h2>
-    <div class="cards" id="cards"></div>
-
-    <section id="zusammenhaenge">
-      <h2>Zusammenhänge</h2>
-      <p>Klick auf ein Thema: Der Graph zeigt dir, was du dafür vorher können musst – auch indirekt. Pfeile gehen von der Voraussetzung zum Thema.</p>
-      <div class="graph-scroll"><svg id="graph" role="group" aria-label="Graph der Themen und ihrer Voraussetzungen"></svg></div>
-      <p class="caption" id="graph-legende"></p>
-      <div class="panel" id="chain" aria-live="polite"></div>
-    </section>
+    <!-- build.js setzt hier eine Kachel pro Fach ein (Link auf faecher/<fach>/index.html). -->
+    <nav class="faecher" aria-label="Fächer">
+{{kacheln}}
+    </nav>

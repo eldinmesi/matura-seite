@@ -44,7 +44,7 @@ Statt eines Notiz-Tools kommt eine **eigene Lernseite im Browser**. Der Stift-Te
 | Ordner | Kürzel | Name | Inhalte (bisher bekannt) |
 |---|---|---|---|
 | `hwe` | HWE | Hardwareentwicklung | Spannungsteiler, Impedanz, RC-Tiefpass, RLC-Schwingkreis; geplant: Gleichrichter, Z-Dioden, Netzteile, Verstärker |
-| `mtrs` | MTRS | Messtechnik und Regelungssysteme | Übertragungsfunktion, Bode-Diagramm |
+| `mtrs` | MTRS | Messtechnik und Regelungssysteme | Übertragungsfunktion, Bode-Diagramm; **fertig:** `blockschaltbild-algebra`, `blockschaltbild-beispiele` (TESLA 020, Fotos fehlen noch) |
 | `dic` | DIC | Digitale Systeme und Computersysteme | – |
 | `ksn` | KSN | Kommunikationssysteme und -netze | – |
 | `fsst` | FSST | Fachspezifische Softwaretechnik (auch „– Übungen“) | – |
@@ -87,7 +87,7 @@ vorlagen/viz.html                   Gerüst einer Visualisierungs-Seite
 vorlagen/neues-thema.md             Vorlage für npm run neu
 assets/css/style.css                alle Stile (Palette, Komponenten, v2-Teil unten angehängt)
 assets/js/graph.js                  TopicGraph.create(topics) – UMD: Browser UND build.js (require)
-assets/js/home.js                   Startseite: Fach-Kacheln (Filter), Karten, SVG-Graph
+assets/js/fach.js                   Fach-Seite: SVG-Graph (Themen des Fachs + Voraussetzungen)
 assets/js/thema.js                  Themenseite: Reiter, Lightbox, iframes (Höhe, Theme, Vollbild)
 assets/js/viz.js                    in jeder Visualisierung: erkennt iframe, meldet Höhe, übernimmt Theme
 assets/js/common.js                 Hell/Dunkel-Schalter, schickt Theme per postMessage an iframes
@@ -112,7 +112,11 @@ So funktioniert `docs/` auch per Doppelklick (`file://`). Die Themenliste kommt 
    Warnungen: fehlendes `kurz`, Ordner ohne thema.md, nicht unterstützte Bildformate (.heic).
 3. **Rendern** je Thema: HTML-Kommentare entfernen → Code schützen → Formeln `$$…$$`/`$…$` durch Platzhalter ersetzen (KaTeX `strict: 'error'`, Fehler mit Datei und Formel) →
    `[[id]]`/`[[id|Text]]` → Link (geplant: `<span class="link-geplant">`) → `marked` → Formeln einsetzen (Block allein im Absatz → `div.formula`) →
-   `{{viz:name}}` (allein im Absatz) → `figure.viz` mit iframe → Bilder prüfen + `loading="lazy"` → unter `## Typische Fragen` jede `###` → `details.qa`.
+   `{{viz:name}}` (allein im Absatz) → `figure.viz` mit iframe → Bilder prüfen + `loading="lazy"` → unter `## Typische Fragen` jede `###` **oder** jeder
+   Absatz, der mit `**Frage?**` beginnt → `details.qa`.
+   **Fehlende Fotos und fehlende `viz/`-Dateien sind nur Warnungen** → gestrichelter Platzhalter-Kasten (`.fehlt`) mit Dateiname, Seite geht trotzdem online.
+   Steht `$$…$$` ohne Leerzeile direkt unter Text, teilt der Build den Absatz an der Block-Formel (nur dort), damit sie ihren scrollbaren Kasten bekommt.
+   `kurz:` darf Formeln enthalten (`textMitFormeln`), gesetzt auf Karten, Themenseite und „Alle Visualisierungen“.
    Inline-Regel: kein Leerzeichen direkt innen und keine Ziffer nach dem schließenden `$` (so bleibt „5 $ und 10 $“ Text).
 4. **Schreiben:** nur geänderte Dateien. `docs/index.html`, `docs/alle-visualisierungen.html`, je fertigem Thema `docs/faecher/<fach>/<id>/index.html`
    und `viz/<name>.html`, `docs/daten/themen.js`, `docs/.nojekyll`, `assets/` und KaTeX-CSS + nur `.woff2`-Schriften nach `docs/assets/katex/`.
@@ -121,14 +125,21 @@ So funktioniert `docs/` auch per Doppelklick (`file://`). Die Themenliste kommt 
 - Sortierung: Fach-`reihenfolge`, dann Ebene im Graphen, dann Titel (`localeCompare('de')`).
 - Vorlagen: `{{name}}`, unbekannter Platzhalter = Fehler; HTML-Kommentare in Vorlagen werden entfernt.
 
-### Startseite (home.js)
-- Fach-Kacheln „Alle“ + 9 Fächer (Kürzel, Name, „x von y fertig“), `aria-pressed`, ausgewählt: 2-px-Rand + ●.
-- Filter in der Adresse: `#fach=hwe`, `#thema=<id>` wählt im Graphen aus und scrollt hin. `history.replaceState`.
-- Graph bei Filter: Themen des Fachs **plus alle ihre Voraussetzungen** aus anderen Fächern (Klasse `fremd`, gestrichelter Rand, Legende darunter).
-  Fach ohne Themen: Graph ausgeblendet, Hinweis `npm run neu -- <fach> thema-id`.
-- Knoten: Titel (✓ bei fertig, gekürzt auf 21 Zeichen) + Zeile „KÜRZEL“ bzw. „KÜRZEL · geplant“. Zeichenwerte wie v1: 178×42, Spalten 232, Zeilen 66, Rand 24.
+### Navigation (Version 2.1, von Eldin so gewünscht)
+**Startseite = nur Fächer → Klick: Fach-Seite mit allen Themen → Klick: Themenseite mit Zusammenfassung.** Alles in einem Tab (keine neuen Fenster).
+- `docs/index.html` (startSeite in build.js, vorlagen/start.html): 9 Fach-Kacheln als Links, Info „n Themen · x fertig“. Kein JS außer Hell/Dunkel.
+- `docs/faecher/<fach>/index.html` (fachSeite, vorlagen/fach.html + graph.html): Themenkarten in Lernreihenfolge, nummeriert, **jede Karte ist ein Link**
+  (auch geplante), Kurztext mit Formeln. Darunter der Graph nur für dieses Fach. Fach ohne Themen: Hinweis `npm run neu -- <fach> thema-id`, kein Graph.
+- **Jedes Thema hat eine Seite.** Geplante ohne Text zeigen „Für dieses Thema gibt es noch keine Zusammenfassung.“ + Vorwissen-Reiter, Titel mit „(geplant)“.
+- Brotkrumen: Fächer › KÜRZEL (→ Fach-Seite). „Im Graphen ansehen“ → `../index.html#thema=<id>`.
+
+### Graph auf der Fach-Seite (assets/js/fach.js, früher home.js – per git mv umbenannt)
+- `<body data-fach="mtrs" data-root="../../">`; Daten aus `docs/daten/themen.js` (`pfad` relativ zu docs/, fach.js setzt `data-root` davor).
+- Gezeichnet: Themen des Fachs **plus alle ihre Voraussetzungen** aus anderen Fächern (Klasse `fremd`, gestrichelter Rand, Legende darunter).
+- Knoten: Titel (✓ bei fertig, gekürzt auf 21 Zeichen, voller Titel als SVG-`<title>`) + Zeile „KÜRZEL“ bzw. „KÜRZEL · geplant“. Zeichenwerte wie v1: 178×42, Spalten 232, Zeilen 66, Rand 24.
   Layout wie v1 (Ebenen-Spalten, Schwerpunkt-Sortierung, vertikal zentriert), leere Spalten werden übersprungen.
-- Auswahl: wie v1 (orange Voraussetzungen, Rest abgeblendet, Panel mit Kette, „Darauf baut auf“, „Zur Seite →“). Chips zeigen „Titel · KÜRZEL“.
+- Auswahl wie v1 (orange Voraussetzungen, Rest abgeblendet, Panel mit Kette, „Darauf baut auf“, „Zur Zusammenfassung →“). Alle Chips sind Links.
+  Startauswahl: `#thema=<id>` aus der Adresse, sonst das letzte Thema des Fachs in Lernreihenfolge (längste Kette).
 - Handy: Graph in Originalgröße, waagrecht scrollbar (`.graph-scroll svg { max-width: none }`).
 
 ### Themenseite (thema.html + thema.js)
@@ -275,3 +286,9 @@ sonst in mehrere Themen teilen. Deutsch (Österreich), Matura-Niveau HTL. Fachbe
   `build.js`, `neu.js`, Vorlagen, Fach-Filter, Reiter, Galerie/Lightbox, iframe-Visualisierungen, „Alle Visualisierungen“, `[[Links]]`, aufklappbare Fragen.
   Alte Dateien per `git mv` verschoben, `.nojekyll` (Wurzel) gelöscht. Getestet (Abschnitt 3). README neu geschrieben.
   Offen: Pages auf `/docs` umstellen, Zuordnung HWE/MTRS bestätigen, Skill anpassen.
+- **2026-11-06** · **Version 2.1 – Navigation umgebaut** (Eldin war mit Filter-Startseite nicht zufrieden): Start = nur Fächer → Fach-Seite (Themen + Graph)
+  → Themenseite. Jedes Thema hat eine Seite (auch geplante). `home.js` → `fach.js` (git mv), neue Vorlagen `fach.html`, `graph.html`.
+  Zwei MTRS-Themen von Eldin eingefügt (Blockschaltbild-Algebra, -Beispiele; `fach:`-Zeile bleibt, wird ignoriert). Bsp. 02, 04, 10 und G = 2 numerisch nachgeprüft;
+  ⚠️-Hinweise zu Bsp. 02/08/09 offen (Heft prüfen). Build: fehlende Fotos/Viz nur Warnung + Platzhalter, `**Frage?**` als aufklappbare Frage,
+  Formeln in `kurz`, Absatz-Aufteilung bei `$$` direkt unter Text. Test neu (Start → MTRS → Thema → zurück, geplante Seite, Graph-Link), alles grün.
+  Offen: 8 Heftfotos für MTRS (Dateinamen in den Build-Warnungen), Visualisierung `blockschaltbild-vereinfachen`.

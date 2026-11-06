@@ -53,7 +53,7 @@ window.TOPICS = [
     "fach": "hwe",
     "status": "geplant",
     "voraus": [],
-    "kurz": "Zwei Widerstände teilen eine Spannung."
+    "pfad": "faecher/hwe/spannungsteiler/index.html"
   },
   {
     "id": "impedanz",
@@ -63,7 +63,7 @@ window.TOPICS = [
     "voraus": [
       "komplexe-zahlen"
     ],
-    "kurz": "Komplexe Wechselstromrechnung mit R, L und C."
+    "pfad": "faecher/hwe/impedanz/index.html"
   },
   {
     "id": "rc-tiefpass",
@@ -75,7 +75,6 @@ window.TOPICS = [
       "impedanz",
       "dgl-1-ordnung"
     ],
-    "kurz": "Ein Widerstand und ein Kondensator lassen tiefe Frequenzen durch und dämpfen hohe. Grenzfrequenz, Bode-Diagramm und Sprungantwort zum Ausprobieren.",
     "pfad": "faecher/hwe/rc-tiefpass/index.html"
   },
   {
@@ -87,7 +86,7 @@ window.TOPICS = [
       "impedanz",
       "rc-tiefpass"
     ],
-    "kurz": "Resonanz, Güte und Bandbreite."
+    "pfad": "faecher/hwe/rlc-schwingkreis/index.html"
   },
   {
     "id": "uebertragungsfunktion",
@@ -98,7 +97,18 @@ window.TOPICS = [
       "laplace",
       "impedanz"
     ],
-    "kurz": "H(s) aufstellen, Pole und Nullstellen."
+    "pfad": "faecher/mtrs/uebertragungsfunktion/index.html"
+  },
+  {
+    "id": "blockschaltbild-algebra",
+    "titel": "Algebra von Blockschaltbildern",
+    "fach": "mtrs",
+    "status": "fertig",
+    "voraus": [
+      "uebertragungsfunktion",
+      "laplace"
+    ],
+    "pfad": "faecher/mtrs/blockschaltbild-algebra/index.html"
   },
   {
     "id": "bode-diagramm",
@@ -109,7 +119,17 @@ window.TOPICS = [
       "uebertragungsfunktion",
       "rc-tiefpass"
     ],
-    "kurz": "Betrag und Phase über der Frequenz zeichnen."
+    "pfad": "faecher/mtrs/bode-diagramm/index.html"
+  },
+  {
+    "id": "blockschaltbild-beispiele",
+    "titel": "Blockschaltbilder vereinfachen – Beispiele",
+    "fach": "mtrs",
+    "status": "fertig",
+    "voraus": [
+      "blockschaltbild-algebra"
+    ],
+    "pfad": "faecher/mtrs/blockschaltbild-beispiele/index.html"
   },
   {
     "id": "dgl-1-ordnung",
@@ -117,7 +137,7 @@ window.TOPICS = [
     "fach": "mathe",
     "status": "geplant",
     "voraus": [],
-    "kurz": "Differentialgleichungen und die e-Funktion."
+    "pfad": "faecher/mathe/dgl-1-ordnung/index.html"
   },
   {
     "id": "komplexe-zahlen",
@@ -125,7 +145,7 @@ window.TOPICS = [
     "fach": "mathe",
     "status": "geplant",
     "voraus": [],
-    "kurz": "Rechnen mit j, Betrag und Phase, Polarform."
+    "pfad": "faecher/mathe/komplexe-zahlen/index.html"
   },
   {
     "id": "laplace",
@@ -136,7 +156,7 @@ window.TOPICS = [
       "komplexe-zahlen",
       "dgl-1-ordnung"
     ],
-    "kurz": "Vom Zeitbereich in den Bildbereich."
+    "pfad": "faecher/mathe/laplace/index.html"
   },
   {
     "id": "die-wolke",
@@ -144,7 +164,7 @@ window.TOPICS = [
     "fach": "deutsch",
     "status": "geplant",
     "voraus": [],
-    "kurz": "Thema für die mündliche Matura."
+    "pfad": "faecher/deutsch/die-wolke/index.html"
   },
   {
     "id": "sensitivity-reading",
@@ -152,7 +172,7 @@ window.TOPICS = [
     "fach": "deutsch",
     "status": "geplant",
     "voraus": [],
-    "kurz": "Thema für die mündliche Matura."
+    "pfad": "faecher/deutsch/sensitivity-reading/index.html"
   },
   {
     "id": "sprachensterben",
@@ -160,7 +180,7 @@ window.TOPICS = [
     "fach": "deutsch",
     "status": "geplant",
     "voraus": [],
-    "kurz": "Thema für die mündliche Matura."
+    "pfad": "faecher/deutsch/sprachensterben/index.html"
   },
   {
     "id": "digital-detox",
@@ -168,6 +188,6 @@ window.TOPICS = [
     "fach": "englisch",
     "status": "geplant",
     "voraus": [],
-    "kurz": "Topic for the oral exam."
+    "pfad": "faecher/englisch/digital-detox/index.html"
   }
 ];

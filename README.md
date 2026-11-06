@@ -49,7 +49,7 @@ faecher/
 vorlagen/                      HTML-Gerüste der Seiten + Vorlage für neue Themen
 assets/                        CSS und JavaScript für den Browser (wird nach docs/ kopiert)
   js/graph.js                  Voraussetzungs-Graph (benutzt von Browser UND build.js)
-  js/home.js                   Startseite: Fach-Filter, Karten, Graph
+  js/fach.js                   Fach-Seite: Graph der Voraussetzungen
   js/thema.js                  Themenseite: Reiter, Bilder-Lightbox, eingebettete Visualisierungen
   js/viz.js                    läuft in jeder Visualisierung (Höhe + Hell/Dunkel ans iframe)
   js/common.js                 Hell/Dunkel-Schalter
@@ -80,6 +80,8 @@ Antwort.
 ```
 
 - Das **Fach** ergibt sich aus dem Ordner, nicht aus dem Front matter.
+- **Typische Fragen:** `### Frage?` oder `**Frage?**` am Absatzanfang, Antwort darunter.
+- **Fehlende Fotos/Visualisierungen** brechen den Build nicht ab: Warnung + Platzhalter auf der Seite.
 - **ids** (Ordnernamen): klein, ohne Umlaute, mit Bindestrich, z. B. `uebertragungsfunktion`.
 - Ein `$` als echtes Dollarzeichen: `\$`. „5 $ und 10 $“ (mit Leerzeichen) bleibt ohnehin Text.
 

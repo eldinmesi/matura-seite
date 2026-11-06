@@ -81,11 +81,9 @@ function vorlage(name, daten) {
 }
 
 /* Ganze Seite = seite.html mit eingesetztem Inhalt */
-function seite({ titel, root, inhalt, kopf = '', skripte = '', bodyKlasse = '' }) {
-  return vorlage('seite.html', {
-    titel: esc(titel), root, inhalt, kopf, skripte,
-    body: bodyKlasse ? ` class="${bodyKlasse}"` : ''
-  });
+/* bodyAttr: zusätzliche Attribute für <body>, z. B. data-fach für fach.js */
+function seite({ titel, root, inhalt, kopf = '', skripte = '', bodyAttr = '' }) {
+  return vorlage('seite.html', { titel: esc(titel), root, inhalt, kopf, skripte, body: bodyAttr });
 }
 
 /* ---------- Front matter (der Block zwischen --- und --- am Anfang von thema.md) ----------
@@ -216,6 +214,26 @@ function pruefen({ themen }) {
      d) [[thema-id]] → normaler Markdown-Link
      e) Markdown rendern, dann Formeln (fertiges KaTeX-HTML) wieder einsetzen
      f) {{viz:name}} → eingebettete Visualisierung, Typische Fragen → aufklappbar */
+/* Eine Formel mit KaTeX setzen. strict: 'error' meldet auch Kleinigkeiten (z. B. ° statt ^\circ). */
+function texZuHtml(tex, display, wo) {
+  try {
+    return katex.renderToString(tex.trim(), { displayMode: display, throwOnError: true, strict: 'error' });
+  } catch (e) {
+    fehler.push(`${wo}: Formel kann nicht gesetzt werden: $${tex.trim()}$ → ${e.message.replace(/^KaTeX parse error: /, '')}`);
+    return esc(tex);
+  }
+}
+
+// Inline-Formel: $...$ ohne Leerzeichen direkt innen (so ist "5 $ und 10 $" keine Formel), \$ = echtes Dollarzeichen
+const INLINE_FORMEL = /(^|[^\\$])\$([^\s$](?:[^$\n]*?[^\s\\$])?)\$(?!\d)/g;
+
+/* Kurzer Text (z. B. "kurz:" aus dem Front matter): HTML-sicher machen, $...$ als Formel setzen */
+function textMitFormeln(s, wo) {
+  const formeln = [];
+  const ohne = String(s).replace(INLINE_FORMEL, (m, vor, tex) => { formeln.push(texZuHtml(tex, false, wo)); return `${vor}KATEXPLATZHALTER${formeln.length - 1}X`; });
+  return esc(ohne).replace(/KATEXPLATZHALTER(\d+)X/g, (m, i) => formeln[i]);
+}
+
 function renderMarkdown(t, ctx) {
   const wo = rel(t.mdDatei);
   let md = t.text.replace(/<!--[\s\S]*?-->/g, '');
@@ -225,23 +243,16 @@ function renderMarkdown(t, ctx) {
 
   const formeln = [];
   const formel = (tex, display) => {
-    try {
-      formeln.push({ html: katex.renderToString(tex.trim(), { displayMode: display, throwOnError: true, strict: 'error' }), display });
-    } catch (e) {
-      fehler.push(`${wo}: Formel kann nicht gesetzt werden: $${tex.trim()}$ → ${e.message.replace(/^KaTeX parse error: /, '')}`);
-      formeln.push({ html: esc(tex), display });
-    }
+    formeln.push({ html: texZuHtml(tex, display, wo), display });
     return `KATEXPLATZHALTER${formeln.length - 1}X`;
   };
   md = md.replace(/\$\$([\s\S]+?)\$\$/g, (m, tex) => formel(tex, true));
-  // Inline: $...$ ohne Leerzeichen direkt innen (so ist "5 $ und 10 $" keine Formel), \$ = echtes Dollarzeichen
-  md = md.replace(/(^|[^\\$])\$([^\s$](?:[^$\n]*?[^\s\\$])?)\$(?!\d)/g, (m, vor, tex) => vor + formel(tex, false));
+  md = md.replace(INLINE_FORMEL, (m, vor, tex) => vor + formel(tex, false));
 
+  // [[id]] → Link auf das Thema (jedes Thema hat eine Seite, auch geplante)
   md = md.replace(/\[\[([a-z0-9-]+)(?:\|([^\]]+))?\]\]/g, (m, id, text) => {
     const z = ctx.byId[id];
     if (!z) { fehler.push(`${wo}: Link [[${id}]] – dieses Thema gibt es nicht.`); return text || id; }
-    // Geplantes Thema: noch keine Seite → nur Text, punktiert unterstrichen (Hinweis beim Drüberfahren)
-    if (z.status !== 'fertig') return `<span class="link-geplant" title="${esc(z.titel)}: Thema ist noch geplant">${text || z.titel}</span>`;
     return `[${text || z.titel}](../../${z.fach}/${z.id}/index.html)`;
   });
 
@@ -249,29 +260,48 @@ function renderMarkdown(t, ctx) {
 
   let html = marked.parse(md);
 
-  // Formeln einsetzen: Block-Formel allein in einem Absatz → <div class="formula">
-  html = html.replace(/<p>KATEXPLATZHALTER(\d+)X<\/p>/g, (m, i) =>
-    formeln[i].display ? `<div class="formula">${formeln[i].html}</div>` : m);
-  html = html.replace(/KATEXPLATZHALTER(\d+)X/g, (m, i) => formeln[i].html);
+  // Formeln einsetzen. Block-Formeln ($$...$$) bekommen einen eigenen Kasten (<div class="formula">,
+  // waagrecht scrollbar am Handy). Steht $$...$$ direkt unter einer Textzeile (ohne Leerzeile),
+  // packt Markdown beides in EINEN Absatz → Absatz an der Formel aufteilen.
+  const blockFormel = (i) => `<div class="formula">${formeln[i].html}</div>`;
+  html = html.replace(/<p>([\s\S]*?)<\/p>/g, (m, inner) => {
+    // Nur an BLOCK-Formeln trennen; Inline-Formeln bleiben im Text. Block-Platzhalter vorher mit \u0000 markieren.
+    const markiert = inner.replace(/KATEXPLATZHALTER(\d+)X/g, (tok, i) => formeln[i].display ? `\u0000${i}\u0000` : tok);
+    if (markiert === inner) return m;
+    return markiert.split(/\u0000(\d+)\u0000/).map((teil, j) =>
+      j % 2 === 1 ? blockFormel(teil) : (teil.trim() ? `<p>${teil.trim()}</p>` : '')
+    ).join('\n');
+  });
+  html = html.replace(/KATEXPLATZHALTER(\d+)X/g, (m, i) => formeln[i].display ? blockFormel(i) : formeln[i].html);
 
-  // Visualisierung einbetten (muss allein in einer Zeile stehen)
+  // Visualisierung einbetten (muss allein in einer Zeile stehen).
+  // Fehlt die Datei noch: Warnung + Platzhalter-Kasten, damit man trotzdem veröffentlichen kann.
   html = html.replace(/<p>\s*\{\{viz:([a-z0-9-]+)\}\}\s*<\/p>/g, (m, name) => {
     const v = t.viz.find((x) => x.name === name);
-    if (!v) { fehler.push(`${wo}: {{viz:${name}}} – Datei viz/${name}.html gibt es nicht.`); return ''; }
-    return vizEinbetten(v);
+    if (v) return vizEinbetten(v);
+    warnungen.push(`${wo}: {{viz:${name}}} – Datei viz/${name}.html gibt es noch nicht (Platzhalter angezeigt).`);
+    return `<div class="fehlt">Visualisierung „${esc(name)}“ kommt noch.</div>`;
   });
 
-  // Bilder: prüfen, ob es sie gibt; lazy laden
-  html = html.replace(/<img src="bilder\/([^"]+)"/g, (m, f) => {
-    if (!t.bilder.includes(decodeURIComponent(f))) fehler.push(`${wo}: Bild bilder/${f} gibt es nicht.`);
-    return `<img loading="lazy" src="bilder/${f}"`;
+  // Bilder: prüfen, ob es sie gibt; lazy laden. Fehlt ein Foto: Warnung + Platzhalter mit Dateiname.
+  html = html.replace(/<img src="bilder\/([^"]+)" alt="([^"]*)"[^>]*>/g, (m, f, alt) => {
+    if (t.bilder.includes(decodeURIComponent(f))) return `<img loading="lazy" src="bilder/${f}" alt="${alt}">`;
+    warnungen.push(`${wo}: Foto bilder/${decodeURIComponent(f)} fehlt noch (Platzhalter angezeigt).`);
+    return `<span class="fehlt">Foto fehlt: ${alt ? alt + ' – ' : ''}<code>bilder/${f}</code></span>`;
   });
 
-  // "Typische Fragen": jede ### wird zu <details> (erst überlegen, dann aufklappen)
+  // "Typische Fragen": jede Frage wird zu <details> (erst überlegen, dann aufklappen).
+  // Zwei Schreibweisen gehen:   ### Frage?          oder   **Frage?**
+  //                             Antwort.                   Antwort.
   html = html.replace(/(<h2>Typische Fragen<\/h2>)([\s\S]*?)(?=<h2>|$)/, (m, kopf, rumpf) =>
-    kopf + rumpf.split(/(?=<h3>)/).map((teil) => {
-      const q = teil.match(/^<h3>([\s\S]*?)<\/h3>([\s\S]*)$/);
-      return q ? `<details class="qa"><summary>${q[1]}</summary>${q[2]}</details>\n` : teil;
+    kopf + rumpf.split(/(?=<h3>|<p><strong>)/).map((teil) => {
+      let q = teil.match(/^<h3>([\s\S]*?)<\/h3>([\s\S]*)$/);
+      if (q) return `<details class="qa"><summary>${q[1]}</summary>${q[2]}</details>\n`;
+      q = teil.match(/^<p><strong>([\s\S]*?)<\/strong>\s*(?:<br>)?\s*([\s\S]*)$/);
+      if (!q) return teil;
+      // Antwort stand im selben Absatz (nur Zeilenumbruch) → Absatz wieder öffnen
+      const antwort = q[2].startsWith('</p>') ? q[2].slice(4) : '<p>' + q[2];
+      return `<details class="qa"><summary>${q[1]}</summary>${antwort}</details>\n`;
     }).join(''));
 
   return html;
@@ -293,8 +323,54 @@ function vizEinbetten(v) {
 /* Link-Chip auf ein anderes Thema (von einer Themenseite aus) */
 function chip(z, faecherById, eigenesFach) {
   const fachTxt = z.fach !== eigenesFach ? ` · ${esc(faecherById[z.fach].kuerzel)}` : '';
-  if (z.status === 'fertig') return `<a class="chip done" href="../../${z.fach}/${z.id}/index.html">✓ ${esc(z.titel)}${fachTxt}</a>`;
-  return `<span class="chip plan">${esc(z.titel)}${fachTxt} (geplant)</span>`;
+  const href = `../../${z.fach}/${z.id}/index.html`;
+  if (z.status === 'fertig') return `<a class="chip done" href="${href}">✓ ${esc(z.titel)}${fachTxt}</a>`;
+  return `<a class="chip plan" href="${href}">${esc(z.titel)}${fachTxt} (geplant)</a>`;
+}
+
+/* Themenkarte (auf der Fach-Seite). Jede Karte ist ein Link, auch bei geplanten Themen. */
+function themaKarte(t, ctx, href, nr) {
+  const done = t.status === 'fertig';
+  return `      <a class="tcard ${done ? 'done' : 'plan'}" href="${href}">
+        <span class="fach">${nr}. ${esc(ctx.faecherById[t.fach].kuerzel)}</span>
+        <h3>${esc(t.titel)}</h3>
+        <p>${textMitFormeln(t.kurz, rel(t.mdDatei))}</p>
+        <span class="badge">${done ? '✓ Zusammenfassung' : 'geplant'}</span>
+      </a>\n`;
+}
+
+/* Startseite: nur die Fach-Kacheln */
+function startSeite(ctx) {
+  const kacheln = ctx.faecher.map((f) => {
+    const liste = ctx.themen.filter((t) => t.fach === f.id);
+    const fertig = liste.filter((t) => t.status === 'fertig').length;
+    const info = liste.length ? `${liste.length} ${liste.length === 1 ? 'Thema' : 'Themen'} · ${fertig} fertig` : 'noch keine Themen';
+    return `      <a class="fach-kachel" href="faecher/${f.id}/index.html">
+        <strong>${esc(f.kuerzel)}</strong>
+        <span class="name">${esc(f.name)}</span>
+        <span class="info">${info}</span>
+      </a>`;
+  }).join('\n');
+  return seite({ titel: 'Matura-Lernseite', root: '', inhalt: vorlage('start.html', { kacheln }) });
+}
+
+/* Fach-Seite: alle Themen des Fachs (in Lernreihenfolge) + Graph nur für dieses Fach */
+function fachSeite(f, ctx) {
+  const liste = ctx.themen.filter((t) => t.fach === f.id);
+  const karten = liste.length
+    ? `    <div class="cards">\n${liste.map((t, i) => themaKarte(t, ctx, `${t.id}/index.html`, i + 1)).join('')}    </div>`
+    : `    <p class="leer">Hier gibt es noch keine Themen. Neues Thema anlegen: <code>npm run neu -- ${f.id} thema-id</code></p>`;
+  const graph = liste.length ? vorlage('graph.html', {}) : '';
+  return seite({
+    titel: `${f.kuerzel} – ${f.name} – Matura-Lernseite`,
+    root: '../../',
+    bodyAttr: ` data-fach="${f.id}" data-root="../../"`,
+    inhalt: vorlage('fach.html', { root: '../../', kuerzel: esc(f.kuerzel), name: esc(f.name), karten, graph }),
+    kopf: '  <link rel="stylesheet" href="../../assets/katex/katex.min.css">',
+    skripte: liste.length
+      ? ['daten/themen.js', 'assets/js/graph.js', 'assets/js/fach.js'].map((s) => `  <script src="../../${s}"></script>`).join('\n')
+      : ''
+  });
 }
 
 function themaSeite(t, ctx) {
@@ -323,13 +399,20 @@ ${t.bilder.map((f) => `        <a href="bilder/${encodeURI(f)}" class="galerie-b
   if (anc.length) vw += `<div class="row"><div class="lab">Das solltest du vorher können (in dieser Reihenfolge):</div><ol class="chips">${anc.map((id) => `<li>${chip(ctx.byId[id], ctx.faecherById, t.fach)}</li>`).join('')}</ol></div>`;
   else vw += '<div class="row">Dieses Thema braucht kein Vorwissen aus anderen Themen.</div>';
   if (suc.length) vw += `<div class="row"><div class="lab">Darauf baut auf:</div><ul class="chips">${suc.map((id) => `<li>${chip(ctx.byId[id], ctx.faecherById, t.fach)}</li>`).join('')}</ul></div>`;
-  vw += `<div class="row"><a href="../../../index.html#thema=${t.id}">Im Graphen ansehen →</a></div></div>`;
+  vw += `<div class="row"><a href="../index.html#thema=${t.id}">Im Graphen ansehen →</a></div></div>`;
+
+  // Geplantes Thema ohne Text: Seite gibt es trotzdem (Klick soll immer irgendwo hinführen)
+  const zusammenfassung = t.text.trim()
+    ? renderMarkdown(t, ctx)
+    : `<div class="fehlt gross">Für dieses Thema gibt es noch keine Zusammenfassung.<br>
+        <small>Text in <code>faecher/${t.fach}/${t.id}/thema.md</code> schreiben, dann <code>npm run build</code>.</small></div>`;
 
   const inhalt = vorlage('thema.html', {
     root: '../../../',
-    fach_id: fach.id, fach_kuerzel: esc(fach.kuerzel), fach_name: esc(fach.name),
-    titel: esc(t.titel), kurz: esc(t.kurz),
-    zusammenfassung: renderMarkdown(t, ctx),
+    fach_kuerzel: esc(fach.kuerzel), fach_name: esc(fach.name),
+    titel: esc(t.titel) + (t.status === 'fertig' ? '' : ' <span class="h-sub">(geplant)</span>'),
+    kurz: textMitFormeln(t.kurz, rel(t.mdDatei)),
+    zusammenfassung,
     visualisierungen: vizHtml, bilder: bildHtml, vorwissen: vw
   });
   return seite({
@@ -344,7 +427,7 @@ ${t.bilder.map((f) => `        <a href="bilder/${encodeURI(f)}" class="galerie-b
 function alleVizSeite(ctx) {
   let liste = '';
   for (const f of ctx.faecher) {
-    const eintraege = ctx.themen.filter((t) => t.fach === f.id && t.status === 'fertig')
+    const eintraege = ctx.themen.filter((t) => t.fach === f.id)
       .flatMap((t) => t.viz.map((v) => ({ t, v })));
     if (!eintraege.length) continue;
     liste += `    <h2>${esc(f.kuerzel)} <span class="h-sub">${esc(f.name)}</span></h2>\n    <div class="cards">\n`;
@@ -352,7 +435,7 @@ function alleVizSeite(ctx) {
       liste += `      <div class="tcard done">
         <span class="fach">${esc(f.kuerzel)} · ${esc(t.titel)}</span>
         <h3><a class="karten-link" href="faecher/${f.id}/${t.id}/viz/${v.name}.html">${esc(v.titel)}</a></h3>
-        <p>${esc(v.kurz)}</p>
+        <p>${textMitFormeln(v.kurz, rel(t.mdDatei))}</p>
         <a class="badge" href="faecher/${f.id}/${t.id}/index.html">Zum Thema →</a>
       </div>\n`;
     }
@@ -418,7 +501,11 @@ async function main() {
 
   // 3: alle Seiten im Speicher erzeugen (Formelfehler usw. werden gesammelt)
   const seiten = [];
-  for (const t of themen.filter((x) => x.status === 'fertig')) {
+  seiten.push([path.join(ZIEL, 'index.html'), startSeite(ctx)]);
+  seiten.push([path.join(ZIEL, 'alle-visualisierungen.html'), alleVizSeite(ctx)]);
+  for (const f of faecher) seiten.push([path.join(ZIEL, 'faecher', f.id, 'index.html'), fachSeite(f, ctx)]);
+  // JEDES Thema bekommt eine Seite (geplante zeigen "noch keine Zusammenfassung")
+  for (const t of themen) {
     seiten.push([path.join(ZIEL, 'faecher', t.fach, t.id, 'index.html'), themaSeite(t, ctx)]);
     for (const v of t.viz) {
       const inhalt = v.roh.replace(/^\s*<!--\s*(titel|kurz):.*?-->\s*\n?/gm, '');
@@ -432,18 +519,13 @@ async function main() {
   // 4: schreiben
   for (const [datei, html] of seiten) schreibe(datei, html);
 
-  schreibe(path.join(ZIEL, 'index.html'), seite({
-    titel: 'Matura-Lernseite', root: '', inhalt: vorlage('start.html', {}),
-    skripte: ['daten/themen.js', 'assets/js/graph.js', 'assets/js/home.js'].map((s) => `  <script src="${s}"></script>`).join('\n')
-  }));
-  schreibe(path.join(ZIEL, 'alle-visualisierungen.html'), alleVizSeite(ctx));
-
-  // Datenliste für die Startseite. Als .js statt .json, weil fetch() bei file:// nicht geht.
+  // Datenliste für den Graphen auf den Fach-Seiten. Als .js statt .json, weil fetch() bei file:// nicht geht.
+  // pfad ist relativ zu docs/ (fach.js setzt davor, wie weit es bis docs/ zurück ist).
   const daten = {
     faecher: faecher.map(({ id, kuerzel, name }) => ({ id, kuerzel, name })),
     themen: themen.map((t) => ({
-      id: t.id, titel: t.titel, fach: t.fach, status: t.status, voraus: t.voraus, kurz: t.kurz,
-      pfad: t.status === 'fertig' ? `faecher/${t.fach}/${t.id}/index.html` : undefined
+      id: t.id, titel: t.titel, fach: t.fach, status: t.status, voraus: t.voraus,
+      pfad: `faecher/${t.fach}/${t.id}/index.html`
     }))
   };
   schreibe(path.join(ZIEL, 'daten', 'themen.js'),
@@ -462,7 +544,7 @@ async function main() {
 
   // Bilder und sonstige viz-Dateien (z. B. .js) je Thema
   let neueBilder = 0, anzahlBilder = 0;
-  for (const t of themen.filter((x) => x.status === 'fertig')) {
+  for (const t of themen) {
     const aus = path.join(ZIEL, 'faecher', t.fach, t.id);
     for (const f of dateien(path.join(t.dir, 'viz')).filter((f) => !f.endsWith('.html'))) {
       kopiere(path.join(t.dir, 'viz', f), path.join(aus, 'viz', f));

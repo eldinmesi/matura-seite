@@ -330,3 +330,16 @@ figure.viz iframe { display: block; width: 100%; height: 600px; border: 0; backg
 .graph-scroll svg { max-width: none; }
 .brand, .topnav a { white-space: nowrap; }
 @media (max-width: 600px) { .topnav .nur-gross { display: none; } }
+
+/* ===== Version 2.1: Fächer als Links, Platzhalter für fehlende Fotos/Visualisierungen ===== */
+a.fach-kachel { text-decoration: none; min-height: 96px; }
+a.fach-kachel:focus-visible { outline: 3px solid var(--s1); outline-offset: 2px; }
+.fehlt {
+  display: block; margin: 12px 0; padding: 14px 16px; border: 1px dashed var(--axis); border-radius: 12px;
+  color: var(--ink2); background: var(--surface); font-size: .92rem;
+}
+.fehlt.gross { padding: 28px 20px; text-align: center; font-size: 1rem; }
+.fehlt small { color: var(--muted); }
+.tcard.plan:hover { background: color-mix(in srgb, var(--ink) 3%, var(--surface)); }
+.chip { text-decoration: none; }
+.chip:hover { border-color: var(--axis); }
